@@ -17,24 +17,20 @@ fn encrypt(msg: String, output_file_name: String) {
     let mut imgbuf = image::ImageBuffer::new(imgx, imgy);
 
     let msg = msg.chars().map(|c| c as u8).collect::<Vec<u8>>();
-    let msg_len = msg.clone().len();
+    let msg_len = msg.len();
 
-    let mut i: u64 = 0;
-
-    for (_x, _y, pixel) in imgbuf.enumerate_pixels_mut() {
-        if i+1 > msg_len.try_into().unwrap() {
+    for (i, (_x, _y, pixel)) in imgbuf.enumerate_pixels_mut().enumerate() {
+        if i+1 > msg_len {
             break;
         }
         let character = msg.clone()[i as usize];
         *pixel = image::Rgb([character, character, character]);
-
-        i += 1;
     }
 
     let mut output_file_name = output_file_name;
 
     if !output_file_name.ends_with(".png") {
-        output_file_name = output_file_name + ".png";
+        output_file_name += ".png";
     }
 
     imgbuf.save(output_file_name).unwrap();
@@ -44,16 +40,13 @@ fn decrypt(image_file_name: String) -> Result<String, String> {
     let mut decrypted_msg = String::new();
     match image::open(image_file_name) {
         Ok(img) => {
-            match img {
-                image::DynamicImage::ImageRgb8(imgbuf) => {
-                    for (_x, _y, pixel) in imgbuf.enumerate_pixels() {
-                        let pixel_0_value = pixel.0[0];
-                        if pixel_0_value != 0 {
-                            decrypted_msg.push(pixel_0_value as char)
-                        }
+            if let image::DynamicImage::ImageRgb8(imgbuf) = img {
+                for (_x, _y, pixel) in imgbuf.enumerate_pixels() {
+                    let pixel_0_value = pixel.0[0];
+                    if pixel_0_value != 0 {
+                        decrypted_msg.push(pixel_0_value as char)
                     }
                 }
-                _ => ()
             }
         }
 
